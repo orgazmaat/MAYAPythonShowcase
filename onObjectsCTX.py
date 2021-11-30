@@ -156,17 +156,20 @@ def doSomething(arg):
     elif arg == widgetName11:
         getTool = mc.textField(widgetTool, q=True,text=1)
         getBlank = mc.textScrollList(widgetBlank, q=True, ai=True)
-        print(getBlank, getTool)
+        # print(getBlank, getTool)
         if getTool and getBlank:
             ifContextToggle()
         else:
-            print("------------WARNING: TOOL or BLANK mehses invalid--------------------")
+            print("------------ WARNING: TOOL or BLANK mehses invalid --------------------")
 
     elif arg == widgetName1:
         refreshTextScrollUI(widgetBlank)
 
     elif arg == widgetName2:
-        mc.textField(widgetTool, tx=mc.ls(sl=1, fl=True, type="transform")[0], edit=True)
+        if len(mc.ls(sl=1, fl=True, type="transform")) > 0:
+            mc.textField(widgetTool, tx=mc.ls(sl=1, fl=True, type="transform")[0], edit=True)
+        else:
+            print("------------ WARNING: Nothing selected -------------------")
 
     elif arg == widgetName3: #disabled in this version open "TOOL SETTINGS" in separate window
         # openOptionsWindow
@@ -182,7 +185,6 @@ def doSomething(arg):
         mc.floatField(upVectorWIGz, value=stringToVector(upVectorVAL).z, e=1)
 
     elif arg == widgetName6:
-        print (str(secondaryUpVector))
         mc.optionVar(sv=(optionVarFullPrefix + "secondaryUpVector", str(secondaryUpVector)))
         secondaryUpVectorVAL = mc.optionVar(q=optionVarFullPrefix + "secondaryUpVector")
 
@@ -192,7 +194,7 @@ def doSomething(arg):
 
 def placeNormalNurbPoly(x,y,z):
     transformToPlace = str(mc.textField(widgetTool,q=True,text=1))
-    print ("toolMesh:", transformToPlace)
+    # print ("toolMesh:", transformToPlace)
     trueNormalNurbPoly= mc.duplicate(transformToPlace, rc=True, st=True)
     trueNormalNurbPolyPapa = trueNormalNurbPoly[0]
     mc.move(x, y, z, trueNormalNurbPolyPapa, absolute=True, rpr=True)
@@ -291,7 +293,7 @@ def mainPlaceFunc():
         # is it DONE ?
 
         childrenMesh=mc.listRelatives(transformMesh,c=True,type="mesh")
-        print("childrenMesh=", childrenMesh)
+        # print("childrenMesh=", childrenMesh)
         if childrenMesh:
             intersection = fnMesh.closestIntersection(
                 api.MFloatPoint(pos), #returns list of 4 floats
@@ -322,15 +324,15 @@ def mainPlaceFunc():
                 shadingNormalVector = api.MVector(float(nx), float(ny), float(nz))
                 intersections[transformMesh] = hitRayParam
             else:
-                print("No Intersections")
+                print("------------ WARNING: No Intersections --------------------")
 
-            print("Intersections=", intersections)
-        print(transformMesh, "next transformMesh")
+            # print("Intersections=", intersections)
+        # print(transformMesh, "next transformMesh")
 
     # # # ------------------ if intersection exist : calculate closest one ------------
     if intersections:
         closestMeshTransform = min(intersections.iteritems(), key=operator.itemgetter(1))[0]  # this will always return SINGLE closestMeshTransform
-        print("closestMeshTransform=", closestMeshTransform)
+        # print("closestMeshTransform=", closestMeshTransform)
         ###------------------ if closestMeshFound : put an object
         if closestMeshTransform:
 
@@ -371,7 +373,7 @@ def mainPlaceFunc():
                     closestVertex , distanceTo = min(faceVertsDistance, key=operator.itemgetter(1))
                     # print("-----------------Point SNAP CHECK---------") #
                     # print("closestVertex:" ,closestVertex , distanceTo )
-                    print(fnMesh.getPoint(closestVertex, api.MSpace.kWorld))
+                    # print(fnMesh.getPoint(closestVertex, api.MSpace.kWorld))
                     x, y, z , _ = fnMesh.getPoint(closestVertex, api.MSpace.kWorld)
 
                 if mc.snapMode(q=True, grid=True):  # if grid snap is on #TODO Component Normal
@@ -412,7 +414,7 @@ def mainPlaceFunc():
                 vector12 = calculateUpVectorN
 
                 if vector11.isParallel(vector12, isParallelTolerance):
-                    print("collinear")
+                    print("----------- WARNING: Resulting normal and upVector are collinear -----------")
                     safeVector = secondaryUpVector # TODO putOV check here
                     meshWM = api.MMatrix(mc.xform(closestMeshTransform, query=True, matrix=True, ws=True))
                     vector12 = safeVector.transformAsNormal(meshWM)
@@ -430,17 +432,18 @@ def mainPlaceFunc():
                 objToManip = getMDagPath(trueNormalNurbPoly[0])
 
                 # diag output for DEBUG
-                print("trueNormalNurbPoly=", trueNormalNurbPoly)
-                print("transformMesh=",transformMesh)
-                print("objToManip=", objToManip)
-                print("trueNormalVectorInMeshWM=", trueNormalVectorInMeshWM)
-                print("calculateUpVector=",calculateUpVector)
-
-                print(api.MPoint(x, y, z).distanceTo(pos))
-                print(hitRayParam)
+                # print("trueNormalNurbPoly=", trueNormalNurbPoly)
+                # print("transformMesh=",transformMesh)
+                # print("objToManip=", objToManip)
+                # print("trueNormalVectorInMeshWM=", trueNormalVectorInMeshWM)
+                # print("calculateUpVector=",calculateUpVector)
+                #
+                # print(api.MPoint(x, y, z).distanceTo(pos))
+                # print(hitRayParam)
 
             else:
-                print("no hit")
+                # print("------------------- WARNING: No intersections -----------------")
+                pass
 
             #TODO add functionality to randomly rotate placer transform around face normal
             if intersection[0] != api.MFloatPoint(0, 0, 0, 1):
@@ -463,7 +466,7 @@ def ifContextToggle():
 # Those set of functions are to complicated and workflow hard to understand
 # -----------------------NOTE-------------------------
 # readOptionVars()
-# optionMenuChange()
+# optionMenuChangeUI()
 # updateOptionVars()
 # performFlushToolOV()
 # key code chunks marked as OVMARK
@@ -721,7 +724,7 @@ def createToolWindowUI():
     mc.separator(height=10, style='none')
 
     # -----------------------
-    mc.optionMenuGrp(widgetName9, cal=[1, "left"], cw1=10, width=65, cc='optionMenuChange("%s")' % widgetName9)
+    mc.optionMenuGrp(widgetName9, cal=[1, "left"], cw1=10, width=65, cc='optionMenuChangeUI("%s")' % widgetName9)
     mc.menuItem(label=" <-", ann="use Custom Vector")
     mc.menuItem(label="+X", ann="use positive X preset")
     mc.menuItem(label="+Y", ann="use positive Y preset")
@@ -745,7 +748,7 @@ def createToolWindowUI():
     mc.floatField(toolUpVectorWIGz, value=stringToVector(toolUpVectorVAL).z, precision=1, ann=" Tool Up Vector Z ", cc="updateOptionVars()\nmc.optionMenuGrp('%s',e=1,v=' <-')" % widgetName10)
     mc.separator(height=10, style='none')
 
-    mc.optionMenuGrp(widgetName10, cal=[1, "left"], cw1=10, width=65, cc='optionMenuChange("%s")' % widgetName10)
+    mc.optionMenuGrp(widgetName10, cal=[1, "left"], cw1=10, width=65, cc='optionMenuChangeUI("%s")' % widgetName10)
     mc.menuItem(label=" <-", ann="use Custom Vector")
     mc.menuItem(label="+X", ann="use positive X preset")
     mc.menuItem(label="+Y", ann="use positive Y preset")
