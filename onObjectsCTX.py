@@ -1,3 +1,10 @@
+# Author:  Nikolai Makarov
+# E-mail:  orgazmaat@gmail.com
+#
+# run this from script editor or put on shelf
+# can get UI window later with [createToolWindowUI()]
+# 
+
 import maya.api.OpenMaya as api
 import maya.api.OpenMayaUI as omui
 import maya.OpenMaya as om
@@ -60,6 +67,8 @@ def omToOm2Vector(vector):
 
     :param vector: inputVector
     :return: vector: outputVector
+
+    #sacred
     '''
 
     returnVector=api.MVector(vector.x,vector.y,vector.z)
@@ -146,6 +155,8 @@ toolAimVectorWIGz="toolAimVectorWIGz"
 toolUpVectorWIGx="toolUpVectorWIGx"
 toolUpVectorWIGy="toolUpVectorWIGy"
 toolUpVectorWIGz="toolUpVectorWIGz"
+
+#TODO put all whose var stuff in MAIN
 
 
 def doSomething(arg):
