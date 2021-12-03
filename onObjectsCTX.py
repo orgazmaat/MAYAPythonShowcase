@@ -3,7 +3,7 @@
 #
 # run this from script editor or put on shelf
 # can get UI window later with [createToolWindowUI()]
-# 
+#
 
 import maya.api.OpenMaya as api
 import maya.api.OpenMayaUI as omui
@@ -165,13 +165,20 @@ def doSomething(arg):
         pass
 
     elif arg == widgetName11:
-        getTool = mc.textField(widgetTool, q=True,text=1)
-        getBlank = mc.textScrollList(widgetBlank, q=True, ai=True)
-        # print(getBlank, getTool)
-        if getTool and getBlank:
-            ifContextToggle()
+        # TODO insert ifwindowExist check - maybe i should feed BLANK and TOOL mehses names to OV
+
+        if mc.window(toolWindowName, ex=True):
+            getTool = mc.textField(widgetTool, q=True,text=1)
+            getBlank = mc.textScrollList(widgetBlank, q=True, ai=True)
+            # print(getBlank, getTool)
+            if getTool and getBlank:
+                ifContextToggle()
+            else:
+                print("------------ WARNING: TOOL or BLANK mehses invalid --------------------")
         else:
-            print("------------ WARNING: TOOL or BLANK mehses invalid --------------------")
+            mc.setToolTo("selectSuperContext")
+
+
 
     elif arg == widgetName1:
         refreshTextScrollUI(widgetBlank)
@@ -262,10 +269,12 @@ def orientToolTransform(objToRotate, vector1, vector2, vector3=None, vector4=Non
     transformFnCh.setRotation(quaternionCh, api.MSpace.kWorld)
 
 def initializeTool():
-    mc.button(widgetName11, edit=1, dtg="Active", bgc=UIActiveState)
+    if mc.window(toolWindowName, ex=True):
+        mc.button(widgetName11, edit=1, dtg="Active", bgc=UIActiveState)
 
 def finilizeTool():
-    mc.button(widgetName11, edit=1, dtg="Inactive", bgc=UIInactiveState)
+    if mc.window(toolWindowName, ex=True):
+        mc.button(widgetName11, edit=1, dtg="Inactive", bgc=UIInactiveState)
 
 def mainPlaceFunc():
     vpX, vpY, _ = mc.draggerContext(ctx, query=True, anchorPoint=True,snp=True)
@@ -277,8 +286,17 @@ def mainPlaceFunc():
     intersections={}  # declare a dictionary for intersections
     readOptionVars()
 
+
     #gather Initial Info from OV and UI fields
-    baseMesh = mc.textScrollList(widgetBlank, q=True, ai=True)
+    if mc.window(toolWindowName, ex=True):
+        baseMesh = mc.textScrollList(widgetBlank, q=True, ai=True)
+    else:
+        mc.setToolTo("selectSuperContext")
+        baseMesh =None
+        print(" ------------WARNING: TOOL or BLANK mehses invalid-------------------- ")
+
+
+    # baseMesh = mc.textScrollList(widgetBlank, q=True, ai=True)
     useTrueNormal = mc.optionVar(q=optionVarFullPrefix + "useTrueNormal")
 
     sceneUpVector = stringToVector(mc.optionVar(q=optionVarFullPrefix + "upVector"))
@@ -295,50 +313,51 @@ def mainPlaceFunc():
 
 
     # # # ------------------ getting intersectionList ------------
-    for transformMesh in baseMesh:
+    if baseMesh:
+        for transformMesh in baseMesh:
 
-        fnMesh = api.MFnMesh(getMDagPath(transformMesh))
+            fnMesh = api.MFnMesh(getMDagPath(transformMesh))
 
-        #TODO put check for transforms without transformMesh
-        # childrenMesh = mc.listRelatives(tran, c=True)
-        # is it DONE ?
+            #TODO put check for transforms without transformMesh
+            # childrenMesh = mc.listRelatives(tran, c=True)
+            # is it DONE ?
 
-        childrenMesh=mc.listRelatives(transformMesh,c=True,type="mesh")
-        # print("childrenMesh=", childrenMesh)
-        if childrenMesh:
-            intersection = fnMesh.closestIntersection(
-                api.MFloatPoint(pos), #returns list of 4 floats
-                api.MFloatVector(dir), #returns list of 3 floats
-                api.MSpace.kWorld,
-                # api.MSpace.kObject,
-                IntersectionParameter,
-                False,
-                )
+            childrenMesh=mc.listRelatives(transformMesh,c=True,type="mesh")
+            # print("childrenMesh=", childrenMesh)
+            if childrenMesh:
+                intersection = fnMesh.closestIntersection(
+                    api.MFloatPoint(pos), #returns list of 4 floats
+                    api.MFloatVector(dir), #returns list of 3 floats
+                    api.MSpace.kWorld,
+                    # api.MSpace.kObject,
+                    IntersectionParameter,
+                    False,
+                    )
 
-            if intersection[0] != api.MFloatPoint(0, 0, 0, 1):    # if it hits
-                hitPoint, hitRayParam, hitFace, hitTriangle, hitBary1, hitBary2 = intersection
-                x, y, z, _ = hitPoint
+                if intersection[0] != api.MFloatPoint(0, 0, 0, 1):    # if it hits
+                    hitPoint, hitRayParam, hitFace, hitTriangle, hitBary1, hitBary2 = intersection
+                    x, y, z, _ = hitPoint
 
 
-                intersectionNormal = fnMesh.getClosestNormal(
-                    api.MPoint(x, y, z),
-                    api.MSpace.kWorld)
-                    # api.MSpace.kObject)
-                returnMvector, returnInt  = intersectionNormal
-                nx, ny, nz = returnMvector
+                    intersectionNormal = fnMesh.getClosestNormal(
+                        api.MPoint(x, y, z),
+                        api.MSpace.kWorld)
+                        # api.MSpace.kObject)
+                    returnMvector, returnInt  = intersectionNormal
+                    nx, ny, nz = returnMvector
 
-                # trueNormal i don't like to mix with those ".f" things - reminds me old MEL
-                somestring, pInfX, pInfY, pInfZ = (mc.polyInfo(transformMesh + ".f[" + str(returnInt) + "]", fn=True))[0].split(":")[1].split(" ")
-                trueNormalVector = api.MVector(float(pInfX), float(pInfY), float(pInfZ))
+                    # trueNormal i don't like to mix with those ".f" things - reminds me old MEL
+                    somestring, pInfX, pInfY, pInfZ = (mc.polyInfo(transformMesh + ".f[" + str(returnInt) + "]", fn=True))[0].split(":")[1].split(" ")
+                    trueNormalVector = api.MVector(float(pInfX), float(pInfY), float(pInfZ))
 
-                #  shadingNormalVector
-                shadingNormalVector = api.MVector(float(nx), float(ny), float(nz))
-                intersections[transformMesh] = hitRayParam
-            else:
-                print("------------ WARNING: No Intersections --------------------")
+                    #  shadingNormalVector
+                    shadingNormalVector = api.MVector(float(nx), float(ny), float(nz))
+                    intersections[transformMesh] = hitRayParam
+                else:
+                    print("------------ WARNING: No Intersections --------------------")
 
-            # print("Intersections=", intersections)
-        # print(transformMesh, "next transformMesh")
+                # print("Intersections=", intersections)
+            # print(transformMesh, "next transformMesh")
 
     # # # ------------------ if intersection exist : calculate closest one ------------
     if intersections:
@@ -812,5 +831,4 @@ if mc.window(toolWindowName, ex=True):
     mc.deleteUI(toolWindowName)
 print(toolWindowName,inspectFile()[-2])
 createToolWindowUI()
-
 
