@@ -1,6 +1,7 @@
 # Author:  Nikolai Makarov
 # E-mail:  orgazmaat@gmail.com
-#
+
+# Tested on MAYA 2018.6
 # run this from script editor or put on shelf
 # can get UI window later with [createToolWindowUI()]
 #
@@ -229,7 +230,7 @@ def orientToolTransform(objToRotate, vector1, vector2, vector3=None, vector4=Non
     :param vector4: upFace vector
     :return:
     """
-    print
+    # print
     ###---------------trying to set default UP vector------------
 
     if not vector3:  # this is made for easier orientation of object - it takes X-axis of object to aimed towards aimvector
