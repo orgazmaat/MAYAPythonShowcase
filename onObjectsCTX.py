@@ -49,9 +49,10 @@ def stringToVector(stringVectorArg):
 # -----Hidden Parameters-----
 
 ctx = 'putLocator'
-IntersectionParameter = 9999  # TODO add special optionVar for this parameter
+intersectionParameter = 9999  # TODO add special optionVar for this parameter
 isParallelTolerance = 1.0e-5  # TODO add special optionVar for this parameter
 isEquivalentTolerance = 1.0e-5  # TODO add special optionVar for this parameter
+surfaceOffsetDVAL = 0.0  # TODO add special optionVar for this parameter
 
 posXVector = "(1.0,0.0,0.0)"
 posYVector = "(0.0,1.0,0.0)"
@@ -116,6 +117,9 @@ cwWidth = 295
 cwHeight = 203
 cwRows = [(1, 25), (2, textWidth), (3, 5), (4, middleButtonWidth), (5, 5), (6, specialButtonWidth), (7, 5)]
 cwRowsOpt = [(1, 5), (2, 85), (3, 1), (4, 35), (5, 1), (6, 35), (7, 1), (8, 35), (9, 1), (10, 65), (11, 5)]
+#########- WIP
+cwRowsSlider = [(1, 5), (2, 85), (3, 1), (4, 115), (5, 1), (6, 65),(7,5)]
+
 
 optionVarPrefix = "xz_"
 optionVarFullPrefix = optionVarPrefix + inspectFile()[1] + "_"
@@ -138,6 +142,9 @@ widgetName11="widgetName11"
 widgetName12="widgetName12"
 widgetName13="widgetName13"
 widgetName14="widgetName14"
+widgetName15="widgetName15"
+widgetName16="widgetName16"
+
 
 widgetTool="widgetTool"
 widgetBlank="widgetBlank"
@@ -306,6 +313,7 @@ def mainPlaceFunc():
     toolAimVector = stringToVector(mc.optionVar(q=optionVarFullPrefix + "toolAimVector"))
     toolUpVector = stringToVector(mc.optionVar(q=optionVarFullPrefix + "toolUpVector"))
 
+    surfaceOffset = mc.optionVar(q=optionVarFullPrefix + "surfaceOffset")
 
     #TODO make scheme easier to read by creating dictionary with all intersections
 
@@ -331,7 +339,7 @@ def mainPlaceFunc():
                     api.MFloatVector(dir), #returns list of 3 floats
                     api.MSpace.kWorld,
                     # api.MSpace.kObject,
-                    IntersectionParameter,
+                    intersectionParameter,
                     False,
                     )
 
@@ -373,7 +381,7 @@ def mainPlaceFunc():
                 api.MFloatPoint(pos), #returns list of 4 floats
                 api.MFloatVector(dir), #returns list of 3 floats
                 api.MSpace.kWorld,
-                IntersectionParameter,
+                intersectionParameter,
                 False,
                 )
 
@@ -443,7 +451,7 @@ def mainPlaceFunc():
 
                 vector11 = trueNormalVectorInMeshWM
                 vector12 = calculateUpVectorN
-
+                vector13 = api.MVector(x,y,z)
                 if vector11.isParallel(vector12, isParallelTolerance):
                     print("----------- WARNING: Resulting normal and upVector are collinear -----------")
                     safeVector = secondaryUpVector # TODO putOV check here
@@ -459,7 +467,12 @@ def mainPlaceFunc():
                     # if pointSnap AND edgeSnap ----> use closestVertexCoords
                     # if gridSnap ----> use closestVertexCoords
 
-                trueNormalNurbPoly=placeNormalNurbPoly(x,y,z)
+                # TODO put offset for placement
+                # if surfaceOffset:
+                placementVector = vector13+(vector11 * surfaceOffset)
+                # print("offset:", surfaceOffset, placementVector)
+
+                trueNormalNurbPoly=placeNormalNurbPoly(placementVector.x,placementVector.y, placementVector.z)
                 objToManip = getMDagPath(trueNormalNurbPoly[0])
 
                 # diag output for DEBUG
@@ -518,7 +531,7 @@ def readOptionVars():
     global upVectorVAL
     global useTrueNormalVAL
     global useComponentNormalVAL
-
+    global surfaceOffsetVAL
     # -------------------Initialize Option Vars----------------------
     # OVMARK
     if mc.optionVar(exists=optionVarFullPrefix + "useTrueNormal") == 0:
@@ -545,6 +558,10 @@ def readOptionVars():
         toolUpVectorVAL = mc.optionVar(sv=(optionVarFullPrefix + "toolUpVector", str(toolUpVector)))
     toolUpVectorVAL = mc.optionVar(q=optionVarFullPrefix + "toolUpVector")
 
+    if mc.optionVar(exists=optionVarFullPrefix + "surfaceOffset") == 0:
+        surfaceOffsetVAL = mc.optionVar(fv=(optionVarFullPrefix + "surfaceOffset", surfaceOffsetDVAL))
+    surfaceOffsetVAL = mc.optionVar(q=optionVarFullPrefix + "surfaceOffset")
+
 def updateOptionVars():
     # OVMARK
     useTrueNormalVAL = mc.checkBox(useTrueNormalWIG, q=1, v=1)
@@ -554,14 +571,19 @@ def updateOptionVars():
     toolAimVectorVAL = "(" + str(mc.floatField(toolAimVectorWIGx, q=1, v=1)) + ", " + str(mc.floatField(toolAimVectorWIGy, q=1, v=1)) + ", " + str(mc.floatField(toolAimVectorWIGz, q=1, v=1)) + ")"
     toolUpVectorVAL = "(" + str(mc.floatField(toolUpVectorWIGx, q=1, v=1)) + ", " + str(mc.floatField(toolUpVectorWIGy, q=1, v=1)) + ", " + str(mc.floatField(toolUpVectorWIGz, q=1, v=1)) + ")"
 
+    surfaceOffsetVAL = mc.floatSliderGrp(widgetName15, q=1, v=1)
+
     # --------------------------------------------------------------------
     # OVMARK
     mc.optionVar(iv=(optionVarFullPrefix + "useTrueNormal", (useTrueNormalVAL)))
     mc.optionVar(iv=(optionVarFullPrefix + "useComponentNormal", (useComponentNormalVAL)))
+
     mc.optionVar(sv=(optionVarFullPrefix + "upVector", (upVectorVAL)))
     mc.optionVar(sv=(optionVarFullPrefix + "secondaryUpVector", (secondaryUpVectorVAL)))
     mc.optionVar(sv=(optionVarFullPrefix + "toolAimVector", (toolAimVectorVAL)))
     mc.optionVar(sv=(optionVarFullPrefix + "toolUpVector", (toolUpVectorVAL)))
+
+    mc.optionVar(fv=(optionVarFullPrefix + "surfaceOffset", (surfaceOffsetVAL)))
 
 def performFlushToolOV(arg):
     optionVarList = mc.optionVar(list=True)
@@ -791,11 +813,30 @@ def createToolWindowUI():
     mc.separator(height=10, style='none')
     mc.setParent('..')
 
+    mc.setParent('..')
+
+    #########- WIP
+    mc.columnLayout()
+    mc.rowLayout(nc=7, cw=cwRowsSlider, cat=(2, "right", 1))
+    mc.separator(height=10, style='none')
+    mc.text(l="Offset:",ann=" Surface Offset", align="right")
+    mc.separator(height=10, style='none')
+    #TODO add adaptive scale for offset
+    mc.floatSliderGrp(widgetName15, cw2=[35,75],pre=2, field=True, minValue=-1.0, maxValue=1.0, fieldMinValue=-10.0, fieldMaxValue=10.0, value=surfaceOffsetVAL ,ann=" Surface Offset", cc="updateOptionVars()")
+
+    # mc.floatField(widgetName15, value=0, precision=1, ann=" Surface Offset", cc="updateOptionVars()")
+    mc.separator(height=10, style='none')
+    mc.button(widgetName16,label="<-", bgc=UIInactiveState, ann=" Suggest SurfaceOffset equal to ZERO", width=65, c="mc.floatSliderGrp('%s',e=1,v=0)\nupdateOptionVars()" % widgetName15)
+    # mc.floatSlider(min=-100, max=100, value=0, step=1)
+
+    mc.separator(height=10, style='none')
+    mc.setParent('..')
+
     mc.separator(height=10, style='none')
 
     mc.rowLayout(nc=11, cw=cwRowsOpt, cat=[(2, "right", 1), (8, "right", 1)])  # useTrueNormal row
     mc.separator(height=10, style='none')
-    mc.text(l="UseTrueNrml:", align="right", ann="use geometric normal - will use shading normal if uncheked")
+    mc.text(l="UseTrueNrml:", align="right", ann="use geometric normal - will use shading normal if unchecked")
     mc.separator(height=10, style='none')
     mc.checkBox(useTrueNormalWIG, label="", v=useTrueNormalVAL, cc="updateOptionVars()")
 
