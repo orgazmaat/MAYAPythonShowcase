@@ -220,7 +220,7 @@ def doSomething(arg):
 
 def placeNormalNurbPoly(x,y,z):
     transformToPlace = str(mc.textField(widgetTool,q=True,text=1))
-    # print ("toolMesh:", transformToPlace)
+    # print("toolMesh:", transformToPlace)
     trueNormalNurbPoly= mc.duplicate(transformToPlace, rc=True, st=True)
     trueNormalNurbPolyPapa = trueNormalNurbPoly[0]
     mc.move(x, y, z, trueNormalNurbPolyPapa, absolute=True, rpr=True)
@@ -230,7 +230,7 @@ def placeNormalNurbPoly(x,y,z):
 
 def orientToolTransform(objToRotate, vector1, vector2, vector3=None, vector4=None):
     """
-    :param obj: object to orient
+    :param obj: object to orient dagPath (getMDagPath(node))
     :param vector1: aim vector
     :param vector2: up vector
     :param vector3: aimFace vector
@@ -822,7 +822,7 @@ def createToolWindowUI():
     mc.text(l="Offset:",ann=" Surface Offset", align="right")
     mc.separator(height=10, style='none')
     #TODO add adaptive scale for offset
-    mc.floatSliderGrp(widgetName15, cw2=[35,75],pre=2, field=True, minValue=-1.0, maxValue=1.0, fieldMinValue=-10.0, fieldMaxValue=10.0, value=surfaceOffsetVAL ,ann=" Surface Offset", cc="updateOptionVars()")
+    mc.floatSliderGrp(widgetName15, cw2=[35,75],pre=2, field=True, minValue=-1.0, maxValue=1.0, fieldMinValue=-10.0, fieldMaxValue=10.0, v=surfaceOffsetVAL ,ann=" Surface Offset", cc="updateOptionVars()")
 
     # mc.floatField(widgetName15, value=0, precision=1, ann=" Surface Offset", cc="updateOptionVars()")
     mc.separator(height=10, style='none')
