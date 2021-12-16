@@ -284,224 +284,42 @@ def finilizeTool():
     if mc.window(toolWindowName, ex=True):
         mc.button(widgetName11, edit=1, dtg="Inactive", bgc=UIInactiveState)
 
-def mainPlaceFuncOLD():
-    vpX, vpY, _ = mc.draggerContext(ctx, query=True, anchorPoint=True,snp=True)
-    pos = api.MPoint()
-    dir = api.MVector()
-    omui.M3dView().active3dView().viewToWorld(int(vpX), int(vpY), pos, dir)
-
-
-    intersections={}  # declare a dictionary for intersections
-    readOptionVars()
-
-
-    #gather Initial Info from OV and UI fields
-    if mc.window(toolWindowName, ex=True):
-        baseMesh = mc.textScrollList(widgetBlank, q=True, ai=True)
-    else:
-        mc.setToolTo("selectSuperContext")
-        baseMesh =None
-        print(" ------------WARNING: TOOL or BLANK mehses invalid-------------------- ")
-
-
-    # baseMesh = mc.textScrollList(widgetBlank, q=True, ai=True)
-    useTrueNormal = mc.optionVar(q=optionVarFullPrefix + "useTrueNormal")
-
-    sceneUpVector = stringToVector(mc.optionVar(q=optionVarFullPrefix + "upVector"))
-    secondaryUpVector = stringToVector(mc.optionVar(q=optionVarFullPrefix + "secondaryUpVector"))
+#############################
+def mainPlaceFunc():
+    # vpX, vpY, _ = mc.draggerContext(ctx, query=True, anchorPoint=True,snp=True)
+    # pos = api.MPoint()
+    # dir = api.MVector()
+    # omui.M3dView().active3dView().viewToWorld(int(vpX), int(vpY), pos, dir)
 
     toolAimVector = stringToVector(mc.optionVar(q=optionVarFullPrefix + "toolAimVector"))
     toolUpVector = stringToVector(mc.optionVar(q=optionVarFullPrefix + "toolUpVector"))
 
-    surfaceOffset = mc.optionVar(q=optionVarFullPrefix + "surfaceOffset")
-
-    #TODO make scheme easier to read by creating dictionary with all intersections
-
-    # this scheme allows to return ONLY ONE intersection
-    # in other case it will return closestIntersection for ALL shapes
+    placementVector, orientVector, orientUpVector = mainPlaceFuncX()
 
 
-    # # # ------------------ getting intersectionList ------------
-    if baseMesh:
-        for transformMesh in baseMesh:
+    if placementVector:
 
-            fnMesh = api.MFnMesh(getMDagPath(transformMesh))
-
-            #TODO put check for transforms without transformMesh
-            # childrenMesh = mc.listRelatives(tran, c=True)
-            # is it DONE ?
-
-            childrenMesh=mc.listRelatives(transformMesh,c=True,type="mesh")
-            # print("childrenMesh=", childrenMesh)
-            if childrenMesh:
-                intersection = fnMesh.closestIntersection(
-                    api.MFloatPoint(pos), #returns list of 4 floats
-                    api.MFloatVector(dir), #returns list of 3 floats
-                    api.MSpace.kWorld,
-                    # api.MSpace.kObject,
-                    intersectionParameter,
-                    False,
-                    )
-
-                if intersection[0] != api.MFloatPoint(0, 0, 0, 1):    # if it hits
-                    hitPoint, hitRayParam, hitFace, hitTriangle, hitBary1, hitBary2 = intersection
-                    x, y, z, _ = hitPoint
+        trueNormalNurbPoly=placeNormalNurbPoly(placementVector.x,placementVector.y, placementVector.z)
+        objToManip = getMDagPath(trueNormalNurbPoly[0])
+        orientToolTransform(objToManip, orientVector, orientUpVector, toolAimVector, toolUpVector) #TODO make sure its under OV coverage
 
 
-                    intersectionNormal = fnMesh.getClosestNormal(
-                        api.MPoint(x, y, z),
-                        api.MSpace.kWorld)
-                        # api.MSpace.kObject)
-                    returnMvector, returnInt  = intersectionNormal
-                    nx, ny, nz = returnMvector
-
-                    # trueNormal i don't like to mix with those ".f" things - reminds me old MEL
-                    somestring, pInfX, pInfY, pInfZ = (mc.polyInfo(transformMesh + ".f[" + str(returnInt) + "]", fn=True))[0].split(":")[1].split(" ")
-                    trueNormalVector = api.MVector(float(pInfX), float(pInfY), float(pInfZ))
-
-                    #  shadingNormalVector
-                    shadingNormalVector = api.MVector(float(nx), float(ny), float(nz))
-                    intersections[transformMesh] = hitRayParam
-                else:
-                    print("------------ WARNING: No Intersections --------------------")
-
-                # print("Intersections=", intersections)
-            # print(transformMesh, "next transformMesh")
-
-    # # # ------------------ if intersection exist : calculate closest one ------------
-    if intersections:
-        closestMeshTransform = min(intersections.iteritems(), key=operator.itemgetter(1))[0]  # this will always return SINGLE closestMeshTransform
-        # print("closestMeshTransform=", closestMeshTransform)
-        ###------------------ if closestMeshFound : put an object
-        if closestMeshTransform:
-
-            fnMesh = api.MFnMesh(getMDagPath(closestMeshTransform))
-
-            intersection = fnMesh.closestIntersection(
-                api.MFloatPoint(pos), #returns list of 4 floats
-                api.MFloatVector(dir), #returns list of 3 floats
-                api.MSpace.kWorld,
-                intersectionParameter,
-                False,
-                )
-
-            if intersection[0] != api.MFloatPoint(0, 0, 0, 1):    # if it hits
-                hitPoint, hitRayParam, hitFace, hitTriangle, hitBary1, hitBary2 = intersection
-                x, y, z, _ = hitPoint
-
-                intersectionNormal = fnMesh.getClosestNormal(
-                    api.MPoint(x, y, z),
-                    api.MSpace.kWorld)
-
-                returnMvector, returnInt  = intersectionNormal
-                nx, ny, nz = returnMvector
-
-                # trueNormal
-                somestring, pInfX, pInfY, pInfZ = (mc.polyInfo(closestMeshTransform + ".f[" + str(returnInt) + "]", fn=True))[0].split(":")[1].split(" ")
-                trueNormalVector = api.MVector(float(pInfX), float(pInfY), float(pInfZ))
-
-                # shadingNormal
-                shadingNormalVector = api.MVector(float(nx), float(ny), float(nz))
-
-                #####################
-                # trying to calculate closest vertex of mesh
-                if mc.snapMode( q=True, point=True):   # if vertex snap is on
-                    faceVerts = fnMesh.getPolygonVertices(hitFace)
-                    faceVertsDistance = ((vertex, fnMesh.getPoint(vertex, api.MSpace.kWorld).distanceTo(api.MPoint(x, y, z)))
-                                        for vertex in faceVerts)
-                    closestVertex , distanceTo = min(faceVertsDistance, key=operator.itemgetter(1))
-                    # print("-----------------Point SNAP CHECK---------") #
-                    # print("closestVertex:" ,closestVertex , distanceTo )
-                    # print(fnMesh.getPoint(closestVertex, api.MSpace.kWorld))
-                    x, y, z , _ = fnMesh.getPoint(closestVertex, api.MSpace.kWorld)
-
-                if mc.snapMode(q=True, grid=True):  # if grid snap is on #TODO Component Normal
-                    pass
-
-                if mc.snapMode(q=True, curve=True):  # if curve snap is on #TODO Component Normal
-                    pass
-
-                #######################
-
-                meshWM = api.MMatrix(mc.xform(closestMeshTransform, query=True, matrix=True, ws=True))
-
-                # TODO chooseNORMAL to use
-                # if ComponentNormal:
-                    # if pointSnap ----> use closestVertexNormal
-                    # if edgeSnap -----> use edgeCenterNormal
-                    # if pointSnap AND edgeSnap ----> use edgeCenterNormal
-
-                if useTrueNormal:
-                    trueNormalVectorInMeshWM = trueNormalVector.transformAsNormal(meshWM)
-                else:
-                    # meshWM = api.MMatrix(mc.xform(transformMesh, query=True, matrix=True, os=True))
-                    trueNormalVectorInMeshWM = shadingNormalVector
-
-                #TODO CalculateUPVrctorRight
-                calculateUpVector = sceneUpVector.transformAsNormal(meshWM)
-                calculateUpVectorN = calculateUpVector.normalize()
-
-                #############################
-                # place curves - this made for diagnostic and debug
-                # mc.curve(d=1, p=[(x, y, z), (x + trueNormalVectorInMeshWM.x, y + trueNormalVectorInMeshWM.y, z + trueNormalVectorInMeshWM.z)], k=[0, 1])
-                # mc.curve(d=1, p=[(x, y, z), (x + calculateUpVectorN.x, y + calculateUpVectorN.y, z + calculateUpVectorN.z)], k=[0, 1])
-                ##########################################
-
-                # TODO solve collinearity problem
-
-                vector11 = trueNormalVectorInMeshWM
-                vector12 = calculateUpVectorN
-                vector13 = api.MVector(x,y,z)
-                if vector11.isParallel(vector12, isParallelTolerance):
-                    print("----------- WARNING: Resulting normal and upVector are collinear -----------")
-                    safeVector = secondaryUpVector # TODO putOV check here
-                    meshWM = api.MMatrix(mc.xform(closestMeshTransform, query=True, matrix=True, ws=True))
-                    vector12 = safeVector.transformAsNormal(meshWM)
-                ############################################
-
-                # place Tool transforms
-                # TODO chooseSnapCoords to use
-                # if ComponentNormal:
-                    # if pointSnap ----> use closestVertexCoords
-                    # if edgeSnap -----> use edgeCenterCoords
-                    # if pointSnap AND edgeSnap ----> use closestVertexCoords
-                    # if gridSnap ----> use closestVertexCoords
-
-                # TODO put offset for placement
-                # if surfaceOffset:
-                placementVector = vector13+(vector11 * surfaceOffset)
-                # print("offset:", surfaceOffset, placementVector)
-
-                trueNormalNurbPoly=placeNormalNurbPoly(placementVector.x,placementVector.y, placementVector.z)
-                objToManip = getMDagPath(trueNormalNurbPoly[0])
-
-                # diag output for DEBUG
-                # print("trueNormalNurbPoly=", trueNormalNurbPoly)
-                # print("transformMesh=",transformMesh)
-                # print("objToManip=", objToManip)
-                # print("trueNormalVectorInMeshWM=", trueNormalVectorInMeshWM)
-                # print("calculateUpVector=",calculateUpVector)
-                #
-                # print(api.MPoint(x, y, z).distanceTo(pos))
-                # print(hitRayParam)
-
-            else:
-                # print("------------------- WARNING: No intersections -----------------")
-                pass
-
-            #TODO add functionality to randomly rotate placer transform around face normal
-            if intersection[0] != api.MFloatPoint(0, 0, 0, 1):
-                orientToolTransform(objToManip, vector11, vector12, toolAimVector, toolUpVector) #TODO make sure its under OV coverage
-
-#############################
-
+    # return placementVector, orientVector, orientUpVector
 ##################################
 
-def mainPlaceFunc():
+def mainPlaceFuncX():
     vpX, vpY, _ = mc.draggerContext(ctx, query=True, anchorPoint=True,snp=True)
     pos = api.MPoint()
     dir = api.MVector()
     omui.M3dView().active3dView().viewToWorld(int(vpX), int(vpY), pos, dir)
+
+
+    #return NONE of no intersections
+    placementVector = None
+    orientVector = None
+    orientUpVector = None
+
+
 
 
     intersections={}  # declare a dictionary for intersections
@@ -523,8 +341,8 @@ def mainPlaceFunc():
     sceneUpVector = stringToVector(mc.optionVar(q=optionVarFullPrefix + "upVector"))
     secondaryUpVector = stringToVector(mc.optionVar(q=optionVarFullPrefix + "secondaryUpVector"))
 
-    toolAimVector = stringToVector(mc.optionVar(q=optionVarFullPrefix + "toolAimVector"))
-    toolUpVector = stringToVector(mc.optionVar(q=optionVarFullPrefix + "toolUpVector"))
+    # toolAimVector = stringToVector(mc.optionVar(q=optionVarFullPrefix + "toolAimVector"))
+    # toolUpVector = stringToVector(mc.optionVar(q=optionVarFullPrefix + "toolUpVector"))
 
     surfaceOffset = mc.optionVar(q=optionVarFullPrefix + "surfaceOffset")
 
@@ -675,14 +493,14 @@ def mainPlaceFunc():
 
                 # TODO solve collinearity problem
 
-                vector11 = trueNormalVectorInMeshWM
-                vector12 = calculateUpVectorN
-                vector13 = api.MVector(x,y,z)
-                if vector11.isParallel(vector12, isParallelTolerance):
+                orientVector = trueNormalVectorInMeshWM
+                orientUpVector = calculateUpVectorN
+                intersectionVector = api.MVector(x,y,z)
+                if orientVector.isParallel(orientUpVector, isParallelTolerance):
                     print("----------- WARNING: Resulting normal and upVector are collinear -----------")
                     safeVector = secondaryUpVector # TODO putOV check here
                     meshWM = api.MMatrix(mc.xform(closestMeshTransform, query=True, matrix=True, ws=True))
-                    vector12 = safeVector.transformAsNormal(meshWM)
+                    orientUpVector = safeVector.transformAsNormal(meshWM)
                 ############################################
 
                 # place Tool transforms
@@ -694,22 +512,7 @@ def mainPlaceFunc():
                     # if gridSnap ----> use closestVertexCoords
 
                 # TODO put offset for placement
-                # if surfaceOffset:
-                placementVector = vector13+(vector11 * surfaceOffset)
-                # print("offset:", surfaceOffset, placementVector)
-
-                # trueNormalNurbPoly=placeNormalNurbPoly(placementVector.x,placementVector.y, placementVector.z)
-                # objToManip = getMDagPath(trueNormalNurbPoly[0])
-
-                # diag output for DEBUG
-                # print("trueNormalNurbPoly=", trueNormalNurbPoly)
-                # print("transformMesh=",transformMesh)
-                # print("objToManip=", objToManip)
-                # print("trueNormalVectorInMeshWM=", trueNormalVectorInMeshWM)
-                # print("calculateUpVector=",calculateUpVector)
-                #
-                # print(api.MPoint(x, y, z).distanceTo(pos))
-                # print(hitRayParam)
+                placementVector = intersectionVector+(orientVector * surfaceOffset)
 
             else:
                 # print("------------------- WARNING: No intersections -----------------")
@@ -717,9 +520,21 @@ def mainPlaceFunc():
 
             #TODO add functionality to randomly rotate placer transform around face normal
             if intersection[0] != api.MFloatPoint(0, 0, 0, 1):
-                trueNormalNurbPoly=placeNormalNurbPoly(placementVector.x,placementVector.y, placementVector.z)
-                objToManip = getMDagPath(trueNormalNurbPoly[0])
-                orientToolTransform(objToManip, vector11, vector12, toolAimVector, toolUpVector) #TODO make sure its under OV coverage
+                """
+                x , y , z
+                orientVector,
+                orientUpVector, 
+                toolAimVector,
+                toolUpVector
+                """
+
+                # trueNormalNurbPoly=placeNormalNurbPoly(placementVector.x,placementVector.y, placementVector.z)
+                # objToManip = getMDagPath(trueNormalNurbPoly[0])
+                # orientToolTransform(objToManip, orientVector, orientUpVector, toolAimVector, toolUpVector) #TODO make sure its under OV coverage
+
+                # return placementVector, orientVector, orientUpVector
+
+    return placementVector, orientVector, orientUpVector
 
 def ifContextToggle():
     currentCtx = mc.currentCtx()
@@ -1096,9 +911,9 @@ def createToolWindowUI():
     mc.showWindow(currentWindow)
 
 
-# draw window
-if mc.window(toolWindowName, ex=True):
-    mc.deleteUI(toolWindowName)
+# # draw window
+# if mc.window(toolWindowName, ex=True):
+#     mc.deleteUI(toolWindowName)
 print(toolWindowName,inspectFile()[-2])
 createToolWindowUI()
 
