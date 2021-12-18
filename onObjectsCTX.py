@@ -301,7 +301,7 @@ def mainPlaceFunc():
 
         trueNormalNurbPoly=placeNormalNurbPoly(placementVector.x,placementVector.y, placementVector.z)
         objToManip = getMDagPath(trueNormalNurbPoly[0])
-        orientToolTransform(objToManip, orientVector, orientUpVector, toolAimVector, toolUpVector) #TODO make sure its under OV coverage
+        orientToolTransform(objToManip, orientVector, orientUpVector, toolAimVector, toolUpVector)
 
 
     # return placementVector, orientVector, orientUpVector
@@ -358,12 +358,12 @@ def mainPlaceFuncX():
             fnMesh = api.MFnMesh(getMDagPath(transformMesh))
 
             #TODO put check for transforms without transformMesh
-            # childrenMesh = mc.listRelatives(tran, c=True)
+            # childrenShape = mc.listRelatives(tran, c=True,type="mesh")
             # is it DONE ?
 
-            childrenMesh=mc.listRelatives(transformMesh,c=True,type="mesh")
-            # print("childrenMesh=", childrenMesh)
-            if childrenMesh:
+            childrenShape=mc.listRelatives(transformMesh,c=True,type="mesh") #get shape
+            # print("childrenShape=", childrenShape)
+            if childrenShape:
                 intersection = fnMesh.closestIntersection(
                     api.MFloatPoint(pos), #returns list of 4 floats
                     api.MFloatVector(dir), #returns list of 3 floats
