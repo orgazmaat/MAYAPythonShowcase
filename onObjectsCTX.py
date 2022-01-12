@@ -91,7 +91,7 @@ secondaryUpVector = api.MVector(-1.0, 0.0, 0.0)
 
 toolAimVector = api.MVector(1.0, 0.0, 0.0) #TOOL object AIM vector
 toolUpVector = api.MVector(0.0, 1.0, 0.0) #TOOL object UP vector
-orientVector = api.MVector(1.0, 0.0, 0.0) #TOOL custom orient vector
+toolOrientVector = api.MVector(1.0, 0.0, 0.0) #TOOL custom orient vector
 
 def getMDagPath(node):
     selList = api.MSelectionList()
@@ -166,9 +166,9 @@ toolUpVectorWIGx="toolUpVectorWIGx"
 toolUpVectorWIGy="toolUpVectorWIGy"
 toolUpVectorWIGz="toolUpVectorWIGz"
 
-orientVectorWIGx="orientVectorWIGx"
-orientVectorWIGy="orientVectorWIGy"
-orientVectorWIGz="orientVectorWIGz"
+toolOrientVectorWIGx="toolOrientVectorWIGx"
+toolOrientVectorWIGy="toolOrientVectorWIGy"
+toolOrientVectorWIGz="toolOrientVectorWIGz"
 
 
 
@@ -650,7 +650,7 @@ def readOptionVars():
     global useTrueNormalVAL
     global useComponentNormalVAL
     global surfaceOffsetVAL
-    global orientVectorVAL
+    global toolOrientVectorVAL
     # -------------------Initialize Option Vars----------------------
     # OVMARK
     if mc.optionVar(exists=optionVarFullPrefix + "useTrueNormal") == 0:
@@ -681,9 +681,9 @@ def readOptionVars():
         surfaceOffsetVAL = mc.optionVar(fv=(optionVarFullPrefix + "surfaceOffset", surfaceOffsetDVAL))
     surfaceOffsetVAL = mc.optionVar(q=optionVarFullPrefix + "surfaceOffset")
 
-    if mc.optionVar(exists=optionVarFullPrefix + "orientVector") == 0:
-        orientVectorVAL = mc.optionVar(sv=(optionVarFullPrefix + "orientVector", str(orientVector)))
-    orientVectorVAL = mc.optionVar(q=optionVarFullPrefix + "orientVector")
+    if mc.optionVar(exists=optionVarFullPrefix + "toolOrientVector") == 0:
+        toolOrientVectorVAL = mc.optionVar(sv=(optionVarFullPrefix + "toolOrientVector", str(toolOrientVector)))
+    toolOrientVectorVAL = mc.optionVar(q=optionVarFullPrefix + "toolOrientVector")
 
 
 def updateOptionVars():
@@ -944,11 +944,11 @@ def createToolWindowUI():
     # mc.separator(height=10, style='none')
     # mc.text(l="OrientVector:", ann=" OrientVector ", align="right")
     # mc.separator(height=10, style='none')
-    # mc.floatField(orientVectorWIGx, value=stringToVector(orientVectorVAL).x, precision=1, ann=" Orient Vector X ", cc="updateOptionVars()\nmc.optionMenuGrp('%s',e=1,v=' <-')" % widgetName17)
+    # mc.floatField(toolOrientVectorWIGx, value=stringToVector(toolOrientVectorVAL).x, precision=1, ann=" Orient Vector X ", cc="updateOptionVars()\nmc.optionMenuGrp('%s',e=1,v=' <-')" % widgetName17)
     # mc.separator(height=10, style='none')
-    # mc.floatField(orientVectorWIGy, value=stringToVector(orientVectorVAL).y, precision=1, ann=" Orient Vector Y ", cc="updateOptionVars()\nmc.optionMenuGrp('%s',e=1,v=' <-')" % widgetName17)
+    # mc.floatField(toolOrientVectorWIGy, value=stringToVector(toolOrientVectorVAL).y, precision=1, ann=" Orient Vector Y ", cc="updateOptionVars()\nmc.optionMenuGrp('%s',e=1,v=' <-')" % widgetName17)
     # mc.separator(height=10, style='none')
-    # mc.floatField(orientVectorWIGz, value=stringToVector(orientVectorVAL).z, precision=1, ann=" Orient Vector Z ", cc="updateOptionVars()\nmc.optionMenuGrp('%s',e=1,v=' <-')" % widgetName17)
+    # mc.floatField(toolOrientVectorWIGz, value=stringToVector(toolOrientVectorVAL).z, precision=1, ann=" Orient Vector Z ", cc="updateOptionVars()\nmc.optionMenuGrp('%s',e=1,v=' <-')" % widgetName17)
     # mc.separator(height=10, style='none')
     #
     # mc.optionMenuGrp(widgetName18, cal=[1, "left"], cw1=10, width=65, cc='optionMenuChangeUI("%s")' % widgetName18)
