@@ -4,7 +4,7 @@
 # Tested on MAYA 2018.6
 # run this from script editor or put on shelf
 # can get UI window later with [createToolWindowUI()]
-#
+
 
 import maya.api.OpenMaya as api
 import maya.api.OpenMayaUI as omui
@@ -217,6 +217,73 @@ def doSomething(arg):
         mc.floatField(secondaryUpVectorWIGx, value=stringToVector(secondaryUpVectorVAL).x, e=1)
         mc.floatField(secondaryUpVectorWIGy, value=stringToVector(secondaryUpVectorVAL).y, e=1)
         mc.floatField(secondaryUpVectorWIGz, value=stringToVector(secondaryUpVectorVAL).z, e=1)
+
+################------Snap Functions---------------
+def orientToolTransform(objToRotate, vector1, vector2, vector3=None, vector4=None):
+    """
+    :param obj: object to orient
+    :param vector1: aim vector
+    :param vector2: up vector
+    :param vector3: aimFace vector
+    :param vector4: upFace vector
+    :return:
+    """
+    # print
+    ###---------------trying to set default UP vector------------
+
+    if not vector3:  # this is made for easier orientation of object - it takes X-axis of object to aimed towards aimvector
+        vector3 = api.MVector(1.0, 0.0, 0.0)
+
+    if not vector4:  # this is made for easier orientation of object - it takes Y-axis of object to aimed towards aimvector
+        vector4 = api.MVector(0.0, 1.0, 0.0)
+
+    ###---------------normalize input vectors--------------------
+    checkerU = vector1.normal()
+    checkerV = vector2.normal()
+    checkerAim = vector3.normal()
+    checkerUp = vector4.normal()
+
+    ### make sure vectors orthogonal to each over
+    ### now we make sure that checkerV is orthogonal to both U and W by doing cross product again
+    checkerW = (checkerU ^ checkerV).normal()  # crossproduct and normalize
+    checkerV = (checkerW ^ checkerU).normal()
+
+    quaternionCh = api.MQuaternion(checkerAim, checkerU)
+    upRotatedCh = checkerUp.rotateBy(quaternionCh)
+
+
+    # angleCh = math.acos(upRotatedCh.normal() * checkerV.normal())  # TODO returns math domain error if not normalized  - THIS ONE Still returns Math Domain Error
+    ### dot product of 2 normalized vectors should return float(or scalar) between -1 and +1, but this not always work right - so simply clamp it
+    angleCh = math.acos(max(min(upRotatedCh.normal() * checkerV.normal(), 1), -1))  # this one return no error made by SORT of CLAMPING:::max(min(my_value, max_value), min_value)
+
+
+    quaternionVCh = api.MQuaternion(angleCh, checkerU)
+
+    if not checkerV.isEquivalent(upRotatedCh.rotateBy(quaternionVCh), isEquivalentTolerance):
+        angleCh = (2 * math.pi) - angleCh
+        quaternionVCh = api.MQuaternion(angleCh, checkerU)
+
+    quaternionCh *= quaternionVCh
+    transformFnCh = api.MFnTransform(objToRotate)
+    transformFnCh.setRotation(quaternionCh, api.MSpace.kWorld)
+
+def snapToEdge(arg1,arg2,arg3):
+    """
+    :param arg1: coords of POINT to project
+    :param arg2: coords of START
+    :param arg3: coords of END
+    :return: resulting projection of POINT to line between START and END in form of vector
+    """
+
+    vector1 = arg3 - arg2
+    vector2 = arg1 - arg2
+    # returnCoord=coordPoint2-((coordPoint2-coordPoint1)/2)# edge middle
+    returnCoord =arg2+vector1.normalize()*(vector1*vector2)    # point projection
+
+
+
+    return returnCoord
+#######################
 
 def placeNormalNurbPoly(x,y,z):
     transformToPlace = str(mc.textField(widgetTool,q=True,text=1))
