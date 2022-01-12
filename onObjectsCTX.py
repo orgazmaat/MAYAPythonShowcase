@@ -91,7 +91,7 @@ secondaryUpVector = api.MVector(-1.0, 0.0, 0.0)
 
 toolAimVector = api.MVector(1.0, 0.0, 0.0) #TOOL object AIM vector
 toolUpVector = api.MVector(0.0, 1.0, 0.0) #TOOL object UP vector
-
+orientVector = api.MVector(1.0, 0.0, 0.0) #TOOL custom orient vector
 
 def getMDagPath(node):
     selList = api.MSelectionList()
@@ -144,6 +144,8 @@ widgetName13="widgetName13"
 widgetName14="widgetName14"
 widgetName15="widgetName15"
 widgetName16="widgetName16"
+widgetName17="widgetName17"
+widgetName18="widgetName17"
 
 
 widgetTool="widgetTool"
@@ -163,6 +165,12 @@ toolAimVectorWIGz="toolAimVectorWIGz"
 toolUpVectorWIGx="toolUpVectorWIGx"
 toolUpVectorWIGy="toolUpVectorWIGy"
 toolUpVectorWIGz="toolUpVectorWIGz"
+
+orientVectorWIGx="orientVectorWIGx"
+orientVectorWIGy="orientVectorWIGy"
+orientVectorWIGz="orientVectorWIGz"
+
+
 
 #TODO put all whose var stuff in MAIN
 
@@ -642,6 +650,7 @@ def readOptionVars():
     global useTrueNormalVAL
     global useComponentNormalVAL
     global surfaceOffsetVAL
+    global orientVectorVAL
     # -------------------Initialize Option Vars----------------------
     # OVMARK
     if mc.optionVar(exists=optionVarFullPrefix + "useTrueNormal") == 0:
@@ -672,6 +681,11 @@ def readOptionVars():
         surfaceOffsetVAL = mc.optionVar(fv=(optionVarFullPrefix + "surfaceOffset", surfaceOffsetDVAL))
     surfaceOffsetVAL = mc.optionVar(q=optionVarFullPrefix + "surfaceOffset")
 
+    if mc.optionVar(exists=optionVarFullPrefix + "orientVector") == 0:
+        orientVectorVAL = mc.optionVar(sv=(optionVarFullPrefix + "orientVector", str(orientVector)))
+    orientVectorVAL = mc.optionVar(q=optionVarFullPrefix + "orientVector")
+
+
 def updateOptionVars():
     # OVMARK
     useTrueNormalVAL = mc.checkBox(useTrueNormalWIG, q=1, v=1)
@@ -700,6 +714,8 @@ def performFlushToolOV(arg):
     for OV in optionVarList:
         if arg in OV:
             mc.optionVar(rm=OV)
+
+
 
 
 def refreshTextScrollUI(scrollListArg):
@@ -922,6 +938,30 @@ def createToolWindowUI():
 
     mc.separator(height=10, style='none')
     mc.setParent('..')
+#---------------------------------------ToolOrient
+    # mc.separator(height=10, style='none')
+    # mc.rowLayout(nc=11, cw=cwRowsOpt, cat=(2, "right", 1))
+    # mc.separator(height=10, style='none')
+    # mc.text(l="OrientVector:", ann=" OrientVector ", align="right")
+    # mc.separator(height=10, style='none')
+    # mc.floatField(orientVectorWIGx, value=stringToVector(orientVectorVAL).x, precision=1, ann=" Orient Vector X ", cc="updateOptionVars()\nmc.optionMenuGrp('%s',e=1,v=' <-')" % widgetName17)
+    # mc.separator(height=10, style='none')
+    # mc.floatField(orientVectorWIGy, value=stringToVector(orientVectorVAL).y, precision=1, ann=" Orient Vector Y ", cc="updateOptionVars()\nmc.optionMenuGrp('%s',e=1,v=' <-')" % widgetName17)
+    # mc.separator(height=10, style='none')
+    # mc.floatField(orientVectorWIGz, value=stringToVector(orientVectorVAL).z, precision=1, ann=" Orient Vector Z ", cc="updateOptionVars()\nmc.optionMenuGrp('%s',e=1,v=' <-')" % widgetName17)
+    # mc.separator(height=10, style='none')
+    #
+    # mc.optionMenuGrp(widgetName18, cal=[1, "left"], cw1=10, width=65, cc='optionMenuChangeUI("%s")' % widgetName18)
+    #
+    # mc.menuItem(label=" 0", ann="use geo normal")
+    # mc.menuItem(label=" 1", ann="use shading normal")
+    # mc.menuItem(label=" 2", ann="use component normal then SNAP enabled")
+    # mc.menuItem(label=" 3", ann="do not orient")
+    # mc.menuItem(label=" <-", ann="use custom vector")
+    #
+    # mc.separator(height=10, style='none')
+    # mc.setParent('..')
+#-------------------------------
 
     mc.setParent('..')
 
