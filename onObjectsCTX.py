@@ -227,53 +227,6 @@ def doSomething(arg):
         mc.floatField(secondaryUpVectorWIGz, value=stringToVector(secondaryUpVectorVAL).z, e=1)
 
 ################------Snap Functions---------------
-def orientToolTransform(objToRotate, vector1, vector2, vector3=None, vector4=None):
-    """
-    :param obj: object to orient
-    :param vector1: aim vector
-    :param vector2: up vector
-    :param vector3: aimFace vector
-    :param vector4: upFace vector
-    :return:
-    """
-    # print
-    ###---------------trying to set default UP vector------------
-
-    if not vector3:  # this is made for easier orientation of object - it takes X-axis of object to aimed towards aimvector
-        vector3 = api.MVector(1.0, 0.0, 0.0)
-
-    if not vector4:  # this is made for easier orientation of object - it takes Y-axis of object to aimed towards aimvector
-        vector4 = api.MVector(0.0, 1.0, 0.0)
-
-    ###---------------normalize input vectors--------------------
-    checkerU = vector1.normal()
-    checkerV = vector2.normal()
-    checkerAim = vector3.normal()
-    checkerUp = vector4.normal()
-
-    ### make sure vectors orthogonal to each over
-    ### now we make sure that checkerV is orthogonal to both U and W by doing cross product again
-    checkerW = (checkerU ^ checkerV).normal()  # crossproduct and normalize
-    checkerV = (checkerW ^ checkerU).normal()
-
-    quaternionCh = api.MQuaternion(checkerAim, checkerU)
-    upRotatedCh = checkerUp.rotateBy(quaternionCh)
-
-
-    # angleCh = math.acos(upRotatedCh.normal() * checkerV.normal())  # TODO returns math domain error if not normalized  - THIS ONE Still returns Math Domain Error
-    ### dot product of 2 normalized vectors should return float(or scalar) between -1 and +1, but this not always work right - so simply clamp it
-    angleCh = math.acos(max(min(upRotatedCh.normal() * checkerV.normal(), 1), -1))  # this one return no error made by SORT of CLAMPING:::max(min(my_value, max_value), min_value)
-
-
-    quaternionVCh = api.MQuaternion(angleCh, checkerU)
-
-    if not checkerV.isEquivalent(upRotatedCh.rotateBy(quaternionVCh), isEquivalentTolerance):
-        angleCh = (2 * math.pi) - angleCh
-        quaternionVCh = api.MQuaternion(angleCh, checkerU)
-
-    quaternionCh *= quaternionVCh
-    transformFnCh = api.MFnTransform(objToRotate)
-    transformFnCh.setRotation(quaternionCh, api.MSpace.kWorld)
 
 def snapToEdge(arg1,arg2,arg3):
     """
@@ -350,6 +303,9 @@ def orientToolTransform(objToRotate, vector1, vector2, vector3=None, vector4=Non
     quaternionCh *= quaternionVCh
     transformFnCh = api.MFnTransform(objToRotate)
     transformFnCh.setRotation(quaternionCh, api.MSpace.kWorld)
+
+
+
 
 def initializeTool():
     if mc.window(toolWindowName, ex=True):
@@ -534,11 +490,59 @@ def mainPlaceFuncX():
                     stringOfEdgeIndexes = [elem for elem in stringOfEdgeVerts if elem][:-1]
 
                     # x, y, z, _ = fnMesh.getPoint(closestEdgePoint, api.MSpace.kWorld)
-                    print("stringOfEdgeIndexes",stringOfEdgeIndexes)  #
+                    print("closestMeshTransform", closestMeshTransform)
+                    print("stringOfEdgeIndexes", stringOfEdgeIndexes)  #
+
+                    ##########################
+                    ##############################
+                    ###############################
+                    # projectionOnEdge = {}
+                    projectionOnEdge = []
+                    for edgeIndex in stringOfEdgeIndexes:
+                        print (mc.xform(closestMeshTransform+".e["+edgeIndex+"]", q=1, t=1, ws=1))
+                        edgeVertexCoords=mc.xform(closestMeshTransform + ".e[" + edgeIndex + "]", q=1, t=1, ws=1)
+                        coordPoint1 = api.MVector(edgeVertexCoords[0],edgeVertexCoords[1],edgeVertexCoords[2])
+                        coordPoint2 = api.MVector(edgeVertexCoords[3], edgeVertexCoords[4], edgeVertexCoords[5])
+                        pointCoord = api.MVector(x,y,z)
+
+                        # hitPointProjectionCoords = snapToEdge(pointCoord,coordPoint1,coordPoint2)
+                        hitPointProjectionPoint = api.MPoint(snapToEdge(pointCoord, coordPoint1, coordPoint2))
+
+                        # projectionOnEdge[edgeIndex] = hitPointProjectionPoint.distanceTo(api.MPoint(x, y, z))
+
+                        projectionOnEdge.append((edgeIndex, hitPointProjectionPoint.distanceTo(api.MPoint(x, y, z))))
+
+                    print(projectionOnEdge)
+                    print(min(projectionOnEdge,key=operator.itemgetter(1)))
+                    # closestEdgeIndex=(min(projectionOnEdge, key=operator.itemgetter(1)))[0]
+                    print((min(projectionOnEdge, key=operator.itemgetter(1)))[0])
+
+                    closestEdgeCoords=(mc.xform(closestMeshTransform + ".e[" + (min(projectionOnEdge, key=operator.itemgetter(1)))[0] + "]", q=1, t=1, ws=1))
+                    coordPoint1 = api.MVector(closestEdgeCoords[0], closestEdgeCoords[1], closestEdgeCoords[2])
+                    coordPoint2 = api.MVector(closestEdgeCoords[3], closestEdgeCoords[4], closestEdgeCoords[5])
+                    pointCoord = api.MVector(x, y, z)
+
+                    x, y, z, = snapToEdge(pointCoord, coordPoint1, coordPoint2)
 
 
 
-                    x, y, z, _ = fnMesh.getPoint(closestVertexID, api.MSpace.kWorld)
+
+
+
+
+                    # projectionPointDistance = (projPoint.distanceTo(api.MPoint(x, y, z)) for projPoint in projectionOnEdge)
+                    # print ( min(projectionPointDistance))
+
+                    # faceVertsDistance = ((vertex, fnMesh.getPoint(vertex, api.MSpace.kWorld).distanceTo(api.MPoint(x, y, z))) for vertex in faceVerts)
+                    # closestVertexID, distanceTo = min(faceVertsDistance, key=operator.itemgetter(1))
+
+                    # projectionPointDistance = ( projPoint, hitPointProjectionPoint.distanceTo(api.MPoint(x, y, z)) for projPoint in projectionOnEdge)
+
+                    # print (min(projectionPointDistance, key=operator.itemgetter(1)))
+
+
+                    # x, y, z, _ = fnMesh.getPoint(closestVertexID, api.MSpace.kWorld)
+
 
                 #######################
 
