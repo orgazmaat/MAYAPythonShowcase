@@ -508,6 +508,7 @@ def mainPlaceFuncX():
                     stringOfEdgeIndexes =set(stringOfEdgeIndexes)
                     if useOnlyBlankMeshGeo:
                         stringOfEdgeIndexes = list(edgeIndex.intersection(stringOfEdgeIndexes))
+                        print ("setIntersection",stringOfEdgeIndexes)
                     else:
                         stringOfEdgeIndexes = list(stringOfEdgeIndexes)
                     print("stringOfEdgeIndexes", stringOfEdgeIndexes)
@@ -526,16 +527,6 @@ def mainPlaceFuncX():
 
                         # hitPointProjectionCoords = snapToEdge(pointCoord,coordPoint1,coordPoint2)
                         hitPointProjectionPoint = api.MPoint(snapToEdge(pointCoord, coordPoint1, coordPoint2))
-
-                        # public bool InSegmentRange(Vector3 point, Vector3 start, Vector3 end) {
-                        # Vector3 delta = end - start;
-                        # float innerProduct = (point.x - start.x) * delta.x + (point.y - start.y) * delta.y + (point.z - start.z) * delta.z;
-                        # return innerProduct >= 0 && innerProduct <= delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
-                        # }
-
-
-
-
                         # projectionOnEdge[edgeIndex] = hitPointProjectionPoint.distanceTo(api.MPoint(x, y, z))
 
                         projectionOnEdge.append((edgeIndex, hitPointProjectionPoint.distanceTo(api.MPoint(x, y, z))))
@@ -543,8 +534,9 @@ def mainPlaceFuncX():
                     print(projectionOnEdge)
                     print(min(projectionOnEdge,key=operator.itemgetter(1)))
                     # closestEdgeIndex=(min(projectionOnEdge, key=operator.itemgetter(1)))[0]
-                    print((min(projectionOnEdge, key=operator.itemgetter(1)))[0])
-
+                    # print((min(projectionOnEdge, key=operator.itemgetter(1)))[0])
+                    closestEdgeIndex = (min(projectionOnEdge, key=operator.itemgetter(1)))[0]
+                    print("closestEdgeIndex",closestEdgeIndex)
                     closestEdgeCoords=(mc.xform(closestMeshTransform + ".e[" + (min(projectionOnEdge, key=operator.itemgetter(1)))[0] + "]", q=1, t=1, ws=1))
                     coordPoint1 = api.MVector(closestEdgeCoords[0], closestEdgeCoords[1], closestEdgeCoords[2])
                     coordPoint2 = api.MVector(closestEdgeCoords[3], closestEdgeCoords[4], closestEdgeCoords[5])
@@ -552,29 +544,9 @@ def mainPlaceFuncX():
 
                     x, y, z, = snapToEdge(pointCoord, coordPoint1, coordPoint2)
 
-
-
-
-
-
-
-                    # projectionPointDistance = (projPoint.distanceTo(api.MPoint(x, y, z)) for projPoint in projectionOnEdge)
-                    # print ( min(projectionPointDistance))
-
-                    # faceVertsDistance = ((vertex, fnMesh.getPoint(vertex, api.MSpace.kWorld).distanceTo(api.MPoint(x, y, z))) for vertex in faceVerts)
-                    # closestVertexID, distanceTo = min(faceVertsDistance, key=operator.itemgetter(1))
-
-                    # projectionPointDistance = ( projPoint, hitPointProjectionPoint.distanceTo(api.MPoint(x, y, z)) for projPoint in projectionOnEdge)
-
-                    # print (min(projectionPointDistance, key=operator.itemgetter(1)))
-
-
-                    # x, y, z, _ = fnMesh.getPoint(closestVertexID, api.MSpace.kWorld)
-
-
-                #######################
-                #######################
-                #######################
+                    #######################
+                    #######################
+                    #######################
 
                 meshWM = api.MMatrix(mc.xform(closestMeshTransform, query=True, matrix=True, ws=True))
 
@@ -600,10 +572,11 @@ def mainPlaceFuncX():
                 # mc.curve(d=1, p=[(x, y, z), (x + calculateUpVectorN.x, y + calculateUpVectorN.y, z + calculateUpVectorN.z)], k=[0, 1])
                 ##########################################
 
-                # TODO solve collinearity problem
-
+                #TODO put orient vectors selection here
                 orientVector = trueNormalVectorInMeshWM
                 orientUpVector = calculateUpVectorN
+
+
                 intersectionVector = api.MVector(x,y,z)
                 if orientVector.isParallel(orientUpVector, isParallelTolerance):
                     print("----------- WARNING: Resulting normal and upVector are collinear -----------")
