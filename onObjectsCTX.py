@@ -492,13 +492,28 @@ def mainPlaceFuncX():
                     # x, y, z, _ = fnMesh.getPoint(closestEdgePoint, api.MSpace.kWorld)
                     print("closestMeshTransform", closestMeshTransform)
                     print("stringOfEdgeIndexes", stringOfEdgeIndexes)  #
+                    print("hitFace", hitFace)  #
+                    # mc.polyListComponentConversion(closestMeshTransform +".f["+hitFace+"]", ff=True, te=True)
+
+                    print("edgeNames", mc.polyListComponentConversion(closestMeshTransform +".f["+str(hitFace)+"]", ff=True, te=True))
+                    edgeNames = mc.polyListComponentConversion(closestMeshTransform +".f["+str(hitFace)+"]", ff=True, te=True)
+                    edgeIndex = [edgeName.split("[")[1].split("]")[0] for edgeName in edgeNames] #haha, got it
+                    # print("edgeIndex", edgeIndex)  #
+
+
+                    print("edgeIndex", edgeIndex ,"edgeIndexLen",len(edgeIndex))
+
+                    edgeIndex = set(edgeIndex)
+                    stringOfEdgeIndexes =set(stringOfEdgeIndexes)
+                    commonEdgeIndexes = list(edgeIndex.intersection(stringOfEdgeIndexes))
+                    print("commonEdgeIndexes", commonEdgeIndexes)
 
                     ##########################
                     ##############################
                     ###############################
                     # projectionOnEdge = {}
                     projectionOnEdge = []
-                    for edgeIndex in stringOfEdgeIndexes:
+                    for edgeIndex in commonEdgeIndexes:
                         print (mc.xform(closestMeshTransform+".e["+edgeIndex+"]", q=1, t=1, ws=1))
                         edgeVertexCoords=mc.xform(closestMeshTransform + ".e[" + edgeIndex + "]", q=1, t=1, ws=1)
                         coordPoint1 = api.MVector(edgeVertexCoords[0],edgeVertexCoords[1],edgeVertexCoords[2])
@@ -507,6 +522,15 @@ def mainPlaceFuncX():
 
                         # hitPointProjectionCoords = snapToEdge(pointCoord,coordPoint1,coordPoint2)
                         hitPointProjectionPoint = api.MPoint(snapToEdge(pointCoord, coordPoint1, coordPoint2))
+
+                        # public bool InSegmentRange(Vector3 point, Vector3 start, Vector3 end) {
+                        # Vector3 delta = end - start;
+                        # float innerProduct = (point.x - start.x) * delta.x + (point.y - start.y) * delta.y + (point.z - start.z) * delta.z;
+                        # return innerProduct >= 0 && innerProduct <= delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
+                        # }
+
+
+
 
                         # projectionOnEdge[edgeIndex] = hitPointProjectionPoint.distanceTo(api.MPoint(x, y, z))
 
@@ -544,6 +568,8 @@ def mainPlaceFuncX():
                     # x, y, z, _ = fnMesh.getPoint(closestVertexID, api.MSpace.kWorld)
 
 
+                #######################
+                #######################
                 #######################
 
                 meshWM = api.MMatrix(mc.xform(closestMeshTransform, query=True, matrix=True, ws=True))
