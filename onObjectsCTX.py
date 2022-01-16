@@ -77,6 +77,22 @@ def omToOm2Vector(vector):
     returnVector=api.MVector(vector.x,vector.y,vector.z)
     return returnVector
 
+def getFlatten(listToFlat):
+
+    """
+    :param listToFlat: anything ,preferably list of strings
+    :return: flatten list (list of strings)
+
+
+    #sacred
+    """
+
+    preSelect=mc.ls(sl=True,fl=True)
+    mc.select(cl=1)
+    mc.select(listToFlat)
+    flatten = mc.ls(sl=True, fl=True)
+    mc.select(preSelect)
+    return flatten
 
 '''
 # -----------------------NOTE-------------------------
@@ -450,6 +466,7 @@ def mainPlaceFuncX():
             if intersection[0] != api.MFloatPoint(0, 0, 0, 1):    # if it hits
                 hitPoint, hitRayParam, hitFace, hitTriangle, hitBary1, hitBary2 = intersection
                 x, y, z, _ = hitPoint
+                xHit, yHit, zHit, _ = hitPoint
 
                 intersectionNormal = fnMesh.getClosestNormal(
                     api.MPoint(x, y, z),
@@ -496,8 +513,10 @@ def mainPlaceFuncX():
                     print("hitFace", hitFace)  #
                     # mc.polyListComponentConversion(closestMeshTransform +".f["+hitFace+"]", ff=True, te=True)
 
-                    print("edgeNames", mc.polyListComponentConversion(closestMeshTransform +".f["+str(hitFace)+"]", ff=True, te=True))
-                    edgeNames = mc.polyListComponentConversion(closestMeshTransform +".f["+str(hitFace)+"]", ff=True, te=True)
+
+
+                    edgeNames =getFlatten( mc.polyListComponentConversion(closestMeshTransform +".f["+str(hitFace)+"]", ff=True, te=True))
+                    print("edgeNames", edgeNames)
                     edgeIndex = [edgeName.split("[")[1].split("]")[0] for edgeName in edgeNames] #haha, got it
                     # print("edgeIndex", edgeIndex)  #
 
@@ -563,6 +582,7 @@ def mainPlaceFuncX():
                     trueNormalVectorInMeshWM = shadingNormalVector
 
                 #TODO CalculateUPVrctorRight
+
                 calculateUpVector = sceneUpVector.transformAsNormal(meshWM)
                 calculateUpVectorN = calculateUpVector.normalize()
 
@@ -573,9 +593,34 @@ def mainPlaceFuncX():
                 ##########################################
 
                 #TODO put orient vectors selection here
-                orientVector = trueNormalVectorInMeshWM
-                orientUpVector = calculateUpVectorN
 
+                #############################
+                #############################
+                #############################
+
+                if mc.snapMode(q=True, curve=True):  # if curve snap is on #TODO Component Normal
+
+                    print(closestEdgeIndex,xHit,yHit,zHit)
+
+
+
+                    # orientVector = coordPoint2 - coordPoint1
+                    # orientUpVector =(coordPoint2-pointCoord)^(coordPoint1-pointCoord).normal() #crossProduct
+
+                    # orientUpVector = (coordPoint1-pointCoord) ^ (coordPoint2 - pointCoord).normal()  # crossProduct
+                    # orientUpVector = (coordPoint1 - pointCoord.normal()) ^ (coordPoint2 - pointCoord) # crossProduct
+
+                    # orientVector = (coordPoint2-pointCoord)^(coordPoint1-pointCoord).normal() #crossProduct
+                    orientVector = trueNormalVectorInMeshWM
+                    orientUpVector = coordPoint1 - coordPoint2
+
+
+                else:
+                    orientVector = trueNormalVectorInMeshWM
+                    orientUpVector = calculateUpVectorN
+                #############################
+                #############################
+                #############################
 
                 intersectionVector = api.MVector(x,y,z)
                 if orientVector.isParallel(orientUpVector, isParallelTolerance):
