@@ -53,6 +53,7 @@ intersectionParameter = 9999  # TODO add special optionVar for this parameter
 isParallelTolerance = 1.0e-5  # TODO add special optionVar for this parameter
 isEquivalentTolerance = 1.0e-5  # TODO add special optionVar for this parameter
 surfaceOffsetDVAL = 0.0  # TODO add special optionVar for this parameter
+useOnlyBlankMeshGeo = True # TODO add special optionVar for this parameter And Flag in settings
 
 posXVector = "(1.0,0.0,0.0)"
 posYVector = "(0.0,1.0,0.0)"
@@ -505,15 +506,18 @@ def mainPlaceFuncX():
 
                     edgeIndex = set(edgeIndex)
                     stringOfEdgeIndexes =set(stringOfEdgeIndexes)
-                    commonEdgeIndexes = list(edgeIndex.intersection(stringOfEdgeIndexes))
-                    print("commonEdgeIndexes", commonEdgeIndexes)
+                    if useOnlyBlankMeshGeo:
+                        stringOfEdgeIndexes = list(edgeIndex.intersection(stringOfEdgeIndexes))
+                    else:
+                        stringOfEdgeIndexes = list(stringOfEdgeIndexes)
+                    print("stringOfEdgeIndexes", stringOfEdgeIndexes)
 
                     ##########################
                     ##############################
                     ###############################
                     # projectionOnEdge = {}
                     projectionOnEdge = []
-                    for edgeIndex in commonEdgeIndexes:
+                    for edgeIndex in stringOfEdgeIndexes:
                         print (mc.xform(closestMeshTransform+".e["+edgeIndex+"]", q=1, t=1, ws=1))
                         edgeVertexCoords=mc.xform(closestMeshTransform + ".e[" + edgeIndex + "]", q=1, t=1, ws=1)
                         coordPoint1 = api.MVector(edgeVertexCoords[0],edgeVertexCoords[1],edgeVertexCoords[2])
