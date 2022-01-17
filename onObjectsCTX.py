@@ -602,6 +602,17 @@ def mainPlaceFuncX():
 
                     print(closestEdgeIndex,xHit,yHit,zHit)
 
+                    if useComponentNormalVAL:
+
+
+                        orientUpVector = coordPoint1 - coordPoint2
+                        orientVector = trueNormalVectorInMeshWM
+                        #MARK_ONE
+                        # getFacesConnectedToEdge
+                        #check if edge is valid ( only 2 face per edge )
+                        # get Normals for faces
+                        # calculate edgeNormal by summarizing face Normals and normalize it
+                        # set orientVector to calculated edgeNormal
 
 
                     # orientVector = coordPoint2 - coordPoint1
@@ -611,8 +622,9 @@ def mainPlaceFuncX():
                     # orientUpVector = (coordPoint1 - pointCoord.normal()) ^ (coordPoint2 - pointCoord) # crossProduct
 
                     # orientVector = (coordPoint2-pointCoord)^(coordPoint1-pointCoord).normal() #crossProduct
-                    orientVector = trueNormalVectorInMeshWM
-                    orientUpVector = coordPoint1 - coordPoint2
+                    else:
+                        orientVector = trueNormalVectorInMeshWM
+                        orientUpVector = coordPoint1 - coordPoint2
 
 
                 else:
@@ -908,6 +920,9 @@ def createToolWindowUI():
     mc.setParent('..')  #rowLayout
     mc.setParent('..')  #frameLayout
 
+    mc.frameLayout("componentFrame", label="Align to component Tool", collapsable=True, collapse=True, width=cwWidth - 4)
+    mc.setParent('..')  # frameLayout
+
     mc.frameLayout("settingsFrame",label="Settings", collapsable=True, collapse=True,width=cwWidth-4)
 
     mc.columnLayout(width=cwWidth)
@@ -1053,10 +1068,10 @@ def createToolWindowUI():
 
     mc.rowLayout(nc=11, cw=cwRowsOpt, cat=[(2, "right", 1), (8, "right", 1)])  # useTrueNormal row
     mc.separator(height=10, style='none')
-    mc.text(l="UseCompNrml:", align="right",ann="use component normal then point snap is ON", vis=0) #TODO Component Normal
+    mc.text(l="UseCompNrml:", align="right",ann="use component normal then point snap is ON", vis=1) #TODO Component Normal
     mc.separator(height=10, style='none')
 
-    mc.checkBox(useComponentNormalWIG, label="", v=useComponentNormalVAL, cc="updateOptionVars()", vis=0) #TODO Component Normal
+    mc.checkBox(useComponentNormalWIG, label="", v=useComponentNormalVAL, cc="updateOptionVars()", vis=1) #TODO Component Normal
     mc.separator(height=10, style='none')
     mc.setParent('..')
 
