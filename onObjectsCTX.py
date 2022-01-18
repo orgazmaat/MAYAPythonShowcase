@@ -523,6 +523,10 @@ def mainPlaceFuncX():
 
                     print("edgeIndex", edgeIndex ,"edgeIndexLen",len(edgeIndex))
 
+
+
+                    #TODO this doesnt solve problem with concaveFaces
+
                     edgeIndex = set(edgeIndex)
                     stringOfEdgeIndexes =set(stringOfEdgeIndexes)
                     if useOnlyBlankMeshGeo:
@@ -607,12 +611,36 @@ def mainPlaceFuncX():
 
                         orientUpVector = coordPoint1 - coordPoint2
                         orientVector = trueNormalVectorInMeshWM
+
                         #MARK_ONE
                         # getFacesConnectedToEdge
                         #check if edge is valid ( only 2 face per edge )
                         # get Normals for faces
                         # calculate edgeNormal by summarizing face Normals and normalize it
                         # set orientVector to calculated edgeNormal
+
+
+
+                        neighborFaceIndexes = mc.polyInfo( closestMeshTransform + ".e[" + str(closestEdgeIndex) + "]",ef=True)[0].split(":")[1].split()
+                        if len(neighborFaceIndexes)>2:
+                            print (" ------------WARNING: edge has more than 2 nighbor faces-------------------- ")
+                            orientUpVector = coordPoint1 - coordPoint2
+                            orientVector = trueNormalVectorInMeshWM
+                        else:
+                            somestring, faceOneNormalX, faceOneNormalY, faceOneNormalZ = (mc.polyInfo(closestMeshTransform + ".f[" + str(neighborFaceIndexes[0]) + "]", fn=True))[0].split(":")[1].split(" ")
+                            faceOneNormal= api.MVector(float(faceOneNormalX), float(faceOneNormalY), float(faceOneNormalZ))
+                            somestring, faceTwoNormalX, faceTwoNormalY, faceTwoNormalZ = (mc.polyInfo(closestMeshTransform + ".f[" + str(neighborFaceIndexes[1]) + "]", fn=True))[0].split(":")[1].split(" ")
+                            faceTwoNormal = api.MVector(float(faceTwoNormalX), float(faceTwoNormalY), float(faceTwoNormalZ))
+
+                            orientVector = (faceOneNormal+faceTwoNormal).normalize()
+                            orientUpVector = coordPoint1 - coordPoint2
+                        # filename = str('.').join((str(', ').join(fullFilePath.split("/")[-1:])).split("."))[:-3]
+
+                        # somestring, pInfX, pInfY, pInfZ = (mc.polyInfo(closestMeshTransform + ".f[" + str(returnInt) + "]", fn=True))[0].split(":")[1].split(" ")
+                        # trueNormalVector = api.MVector(float(pInfX), float(pInfY), float(pInfZ))
+
+
+
 
 
                     # orientVector = coordPoint2 - coordPoint1
