@@ -542,7 +542,11 @@ def mainPlaceFuncX():
                     ##########################
                     ##############################
                     ###############################
-                    # projectionOnEdge = {}
+
+
+                    stringOfEdgeIndexes = set(edgeIndex) #this will iterate through all edges of hitface
+
+
                     projectionOnEdge = []
                     for edgeIndex in stringOfEdgeIndexes:
                         print (mc.xform(closestMeshTransform+".e["+edgeIndex+"]", q=1, t=1, ws=1))
