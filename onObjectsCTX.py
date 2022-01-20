@@ -504,6 +504,9 @@ def mainPlaceFuncX():
                     closestVertexID , distanceTo = min(faceVertsDistance, key=operator.itemgetter(1))
                     print("-----------------Edge SNAP CHECK---------") #
 
+
+                    #DO NOT!!! calculate closest vertex
+
                     stringOfEdgeVerts = (mc.polyInfo(closestMeshTransform + ".vtx[" + str(closestVertexID) + "]", ve=True))[0].split(":")[1].split(" ")
                     stringOfEdgeIndexes = [elem for elem in stringOfEdgeVerts if elem][:-1]
 
@@ -550,7 +553,18 @@ def mainPlaceFuncX():
 
                         # hitPointProjectionCoords = snapToEdge(pointCoord,coordPoint1,coordPoint2)
                         hitPointProjectionPoint = api.MPoint(snapToEdge(pointCoord, coordPoint1, coordPoint2))
+
+                        #(coordPoint1 + coordPoint2)/2
+                        print ("edgeCenter:",(coordPoint1 + coordPoint2)/2)
+                        edgeCenterMVect = (coordPoint1 + coordPoint2) / 2
+                        api.MPoint(edgeCenterMVect.x,edgeCenterMVect.y,edgeCenterMVect.z)
+                        #find Center of EDGE
+                        #find distance to one of vertex(radius)
+                        #compare distance to hitPointProjectionPoint from Center of EDGE
+                        #if distance is less then radius - append to list
                         # projectionOnEdge[edgeIndex] = hitPointProjectionPoint.distanceTo(api.MPoint(x, y, z))
+                        # if hitPointProjectionPoint.distanceTo(api.MPoint(edgeCenterMVect.x,edgeCenterMVect.y,edgeCenterMVect.z))<= hitPointProjectionPoint.distanceTo(api.MPoint(coordPoint1.x,coordPoint1.y,coordPoint1.z)):
+                        #     projectionOnEdge.append((edgeIndex, hitPointProjectionPoint.distanceTo(api.MPoint(x, y, z))))
 
                         projectionOnEdge.append((edgeIndex, hitPointProjectionPoint.distanceTo(api.MPoint(x, y, z))))
 
@@ -602,7 +616,7 @@ def mainPlaceFuncX():
                 #############################
                 #############################
 
-                if mc.snapMode(q=True, curve=True):  # if curve snap is on #TODO Component Normal
+                if mc.snapMode(q=True, curve=True):  # if curve snap is on #TODO Component Normal ORIENTED WRONg
 
                     print(closestEdgeIndex,xHit,yHit,zHit)
 
@@ -633,7 +647,15 @@ def mainPlaceFuncX():
                             faceTwoNormal = api.MVector(float(faceTwoNormalX), float(faceTwoNormalY), float(faceTwoNormalZ))
 
                             orientVector = (faceOneNormal+faceTwoNormal).normalize()
+                            orientVector = orientVector.transformAsNormal(meshWM) # place it inWM
+
+
+
                             orientUpVector = coordPoint1 - coordPoint2
+
+                            # trueNormalVectorInMeshWM = trueNormalVector.transformAsNormal(meshWM)
+
+
                         # filename = str('.').join((str(', ').join(fullFilePath.split("/")[-1:])).split("."))[:-3]
 
                         # somestring, pInfX, pInfY, pInfZ = (mc.polyInfo(closestMeshTransform + ".f[" + str(returnInt) + "]", fn=True))[0].split(":")[1].split(" ")
